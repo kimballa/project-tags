@@ -21,15 +21,19 @@ process_source() {
   srcjar=$1
   jardir=`dirname "${srcjar}"`
 
-  if [ -d "${jardir}/.srcfiles" ]; then
+  if [ \( ! -d "${jardir}/.srcfiles" \) -o \( "${srcjar}" -nt "${jardir}/.srcfiles" \) ]; then
+    # .srcfiles does not exist, or $srcjar is newer. Remove the existing srcfiles dir and rebuild.
     rm -rf "${jardir}/.srcfiles"
-  fi
-  mkdir "${jardir}/.srcfiles"
+    mkdir "${jardir}/.srcfiles"
 
-  pushd "${jardir}/.srcfiles" 2>/dev/null >/dev/null
-  jar xf "${srcjar}"
-  etags -R .
-  popd 2>/dev/null >/dev/null
+    pushd "${jardir}/.srcfiles" 2>/dev/null >/dev/null
+    jar xf "${srcjar}"
+    etags -R .
+    popd 2>/dev/null >/dev/null
+  else
+    echo "Using existing tags"
+  fi
+
   newtags=`cat .taglist`
   echo "${newtags}\\ ${jardir}/.srcfiles/TAGS" > .taglist
 }
@@ -52,6 +56,8 @@ while [ ! -z "$1" ]; do
 done
 
 cd "${targetdir}"
+targetdir=`pwd`
+echo "Working in ${targetdir}"
 
 # Process tags in the current project sources
 etags -R .
