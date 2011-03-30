@@ -59,9 +59,13 @@ cd "${targetdir}"
 targetdir=`pwd`
 echo "Working in ${targetdir}"
 
-# Process tags in the current project sources
-etags -R .
-echo "./TAGS" > .taglist
+# Process tags in the current project sources; include target/generated-sources,
+# but ignore anything else in target/. 
+etags -R --exclude ${targetdir}/target .
+if [ -d "./target/generated-sources" ]; then
+  etags --append=yes -R ./target/generated-sources
+fi
+echo "${targetdir}/TAGS" > .taglist
 
 if [ ! -f ".classpath" ]; then
   echo "No .classpath file in "`pwd`
